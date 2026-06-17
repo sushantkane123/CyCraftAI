@@ -1,0 +1,6 @@
+[
+  {"timestamp": "2026-06-17T14:22:01Z", "host": "WEB-SRV01", "source_ip": "45.33.12.9", "message": "powershell.exe -ExecutionPolicy Bypass -EncodedCommand SQBuAHYAbwBrAGUALQBXAGUAYgBSAGUAcQB1AGUAcwB0AA=="},
+  {"timestamp": "2026-06-17T14:23:05Z", "host": "FIN-WRK-102", "source_ip": "192.168.20.45", "message": "Anonymous SMB login attempt to \\\\DC01\\C$"},
+  {"timestamp": "2026-06-17T14:24:33Z", "host": "ENG-MAC-404", "source_ip": "192.168.15.88", "message": "Large outbound transfer: 540MB uploaded to mega.nz"},
+  {"timestamp": "2026-06-17T14:25:01Z", "host": "AWS-IAM-US-EAST", "source_ip": "54.210.85.12", "message": "iam:AttachUserPolicy - Attached AdministratorAccess"}
+]
