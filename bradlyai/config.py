@@ -1,34 +1,24 @@
-"""
-BradlyAI Configuration & Advanced Enterprise Settings
-"""
 
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
-    APP_NAME: str = "BradlyAI - Driverless SOC & Automated Incident Response"
-    APP_VERSION: str = "2.0.0"
-    ENVIRONMENT: str = "production"
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
-    LOG_LEVEL: str = "info"
-    
-    # Persistent SQLite Database Setting
+    APP_NAME: str = "BradlyAI - Driverless SOC"
+    APP_VERSION: str = "2.0.0-PRO"
     DATABASE_URL: str = "sqlite:///./bradlyai_soc.db"
-
-    # Active AI LLM Provider Settings for Live Generative Analysis
-    OPENAI_API_KEY: Optional[str] = None
-    GROQ_API_KEY: Optional[str] = None
-    DEFAULT_AI_MODEL: str = "gpt-4o-mini" # or custom Llama 3 / Claude
-
-    # Driverless SOC Behavioral Control Parameters
-    AUTO_CONTAINMENT_THRESHOLD: float = 95.0 # AI confidence minimum to execute zero-touch network lockdown
-    LIVE_SIMULATION_WORKER_ACTIVE: bool = True
-    SIMULATION_INTERVAL_SECONDS: int = 15
     
+    # AI Configuration
+    # Providers: 'groq' (Open Source Llama-3) or 'openai' (GPT-4)
+    LLM_PROVIDER: str = "groq" 
+    GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY", "")
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", "")
+    
+    # Simulation Settings
+    LIVE_SIMULATION_WORKER_ACTIVE: bool = True
+    SIMULATION_INTERVAL_SECONDS: int = 30
+
     class Config:
         env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
 
 settings = Settings()

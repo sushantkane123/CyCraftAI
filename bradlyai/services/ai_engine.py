@@ -1,55 +1,23 @@
-"""
-BradlyAI Core Multi-Model AI Engine Simulated Service
-"""
 
-import random
-import datetime
+from bradlyai.services.llm_client import llm_client
 
-class MultiModelAIEngine:
+class AIEngine:
     """
-    Simulates BradlyAI's multi-model machine learning architecture for root cause storyline generation
+    Real AI Engine that uses LLMs to analyze security alerts 
+    and generate actual root-cause storylines.
     """
-    
-    @staticmethod
-    def analyze_anomaly(endpoint: str, ip: str, raw_behavior: str) -> dict:
-        confidence = f"{random.randint(94, 99)}.{random.randint(1, 9)}%"
+    async def analyze_alert(self, alert_id: str, title: str, mitre: str, endpoint: str):
+        system_prompt = (
+            "You are an elite Cyber Security Forensic Expert. "
+            "Analyze the following alert and provide a professional 4-step root cause storyline. "
+            "Each step should be a concise security event (e.g., '14:02:01 - Initial Access via...'). "
+            "Focus on TTPs (Tactics, Techniques, and Procedures). "
+            "Format: Return ONLY the 4 steps, one per line, no introduction."
+        )
         
-        mitre_mappings = [
-            ("T1059.001 - PowerShell", "CRITICAL"),
-            ("T1210 - Exploitation of Remote Services", "CRITICAL"),
-            ("T1048 - Exfiltration Over Alternative Protocol", "HIGH"),
-            ("T1078 - Valid Accounts", "MEDIUM"),
-            ("T1562.001 - Impair Defenses", "HIGH")
-        ]
+        prompt = f"Alert ID: {alert_id}\nTitle: {title}\nMITRE: {mitre}\nEndpoint: {endpoint}\n\nGenerate the 4-step forensic storyline:"
         
-        selected_mitre, sev = random.choice(mitre_mappings)
-        
-        now = datetime.datetime.utcnow()
-        t1 = (now - datetime.timedelta(seconds=8)).strftime("%H:%M:%S")
-        t2 = (now - datetime.timedelta(seconds=5)).strftime("%H:%M:%S")
-        t3 = (now - datetime.timedelta(seconds=2)).strftime("%H:%M:%S")
-        t4 = now.strftime("%H:%M:%S")
-        
-        storyline = [
-            {"time": t1, "event": f"Telemetry spike observed from IP {ip} targeting {endpoint}"},
-            {"time": t2, "event": f"Multi-model ML identified anomaly matching signature for {selected_mitre}"},
-            {"time": t3, "event": f"Behavioral root cause completely mapped. Initiated driverless containment triage."},
-            {"time": t4, "event": f"Autonomous mitigation executed. Bi-directional firewall applied. Target secured."}
-        ]
-        
-        alert_id = f"ALT-{random.randint(9000, 9999)}"
-        
-        return {
-            "id": alert_id,
-            "severity": sev,
-            "title": f"Autonomous Threat Triage: {raw_behavior}",
-            "endpoint": endpoint,
-            "ip": ip,
-            "timestamp": "Just now",
-            "mitre": selected_mitre,
-            "status": "Auto-Contained",
-            "ai_confidence": confidence,
-            "storyline": storyline
-        }
+        analysis = await llm_client.generate_response(prompt, system_prompt)
+        return analysis.strip().split('\n')
 
-ai_engine = MultiModelAIEngine()
+ai_engine = AIEngine()
