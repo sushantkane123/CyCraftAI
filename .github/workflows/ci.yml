@@ -1,4 +1,4 @@
-name: CyCraft AI Driverless SOC CI/CD Pipeline
+name: BradlyAI Driverless SOC CI/CD Pipeline
 
 on:
   push:

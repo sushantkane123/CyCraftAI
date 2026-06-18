@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  cycraft-backend:
+  bradlyai-backend:
     build: .
     container_name: cycraft_driverless_soc
     ports:
       - "8000:8000"
     environment:
-      - APP_NAME=CyCraft AI
+      - APP_NAME=BradlyAI
       - ENVIRONMENT=production
       - LOG_LEVEL=info
       - HOST=0.0.0.0

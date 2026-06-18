@@ -1,9 +1,9 @@
 """
-Pytest Integration Tests for CyCraft AI FastAPI Backend
+Pytest Integration Tests for BradlyAI FastAPI Backend
 """
 
 from fastapi.testclient import TestClient
-from cycraft.main import app
+from bradlyai.main import app
 
 client = TestClient(app)
 
@@ -97,7 +97,7 @@ def test_system_config():
     response = client.get("/api/v1/system/config")
     assert response.status_code == 200
     data = response.json()
-    assert data["app_name"] == "CyCraft AI - Driverless SOC & Automated Incident Response"
+    assert data["app_name"] == "BradlyAI - Driverless SOC & Automated Incident Response"
 
 
 def test_system_reset():

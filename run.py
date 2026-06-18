@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Top-level development runner for CyCraft AI - Driverless SOC Application
+Top-level development runner for BradlyAI - Driverless SOC Application
 
 Usage examples:
     python run.py
@@ -11,10 +11,10 @@ Usage examples:
 import argparse
 import sys
 import uvicorn
-from cycraft.config import settings
+from bradlyai.config import settings
 
 def main():
-    parser = argparse.ArgumentParser(description="Start CyCraft AI L1 SOC Agent")
+    parser = argparse.ArgumentParser(description="Start BradlyAI L1 SOC Agent")
     parser.add_argument("--host", default=settings.HOST, help="Host to bind (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=settings.PORT, help="Port to bind (default: 8000)")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload (dev mode)")
@@ -26,7 +26,7 @@ def main():
 
     try:
         uvicorn.run(
-            "cycraft.main:app",
+            "bradlyai.main:app",
             host=args.host,
             port=args.port,
             reload=args.reload or (settings.ENVIRONMENT.lower() in ["development", "dev"]),

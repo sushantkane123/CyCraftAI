@@ -1,16 +1,16 @@
-# 🛡️ CyCraft AI - Advanced Python Driverless SOC & Incident Response Platform
+# 🛡️ BradlyAI - Advanced Python Driverless SOC & Incident Response Platform
 
-![CyCraft Branding Flag](https://img.shields.io/badge/CyCraft%20Technology-AI%20Cyber%20Security-00f0ff?style=for-the-badge)
+![BradlyAI Branding Flag](https://img.shields.io/badge/BradlyAI%20Technology-AI%20Cyber%20Security-00f0ff?style=for-the-badge)
 ![Driverless Status](https://img.shields.io/badge/Driverless%20SOC-100%25%20Autonomous-10b981?style=for-the-badge)
 ![FastAPI Infrastructure](https://img.shields.io/badge/Backend-FastAPI%20%2B%20SQLite-3b82f6?style=for-the-badge)
 
-Welcome to the definitive full-stack **Python (FastAPI)** repository and interactive enterprise dashboard for **CyCraft AI**, Asia’s leading AI-driven cybersecurity platform. Engineered for absolute agility, this project gives developers complete sovereign control over their Security Operations Center (SOC) with real Open AI / Groq generative streaming, WebSockets, Web Audio feedback, and SQLite SIEM persistence.
+Welcome to the definitive full-stack **Python (FastAPI)** repository and interactive enterprise dashboard for **BradlyAI**, Asia’s leading AI-driven cybersecurity platform. Engineered for absolute agility, this project gives developers complete sovereign control over their Security Operations Center (SOC) with real Open AI / Groq generative streaming, WebSockets, Web Audio feedback, and SQLite SIEM persistence.
 
 ---
 
 ## 🌟 What makes this Architecture Superior?
 
-While commercial enterprise platforms like CyCraft Technology are amazing at real-world multi-tenant threat hunting, they act as closed-source proprietary black boxes requiring heavy multi-year licensing. 
+While commercial enterprise platforms like BradlyAI Technology are amazing at real-world multi-tenant threat hunting, they act as closed-source proprietary black boxes requiring heavy multi-year licensing. 
 
 **This repository gives you absolute open-architecture agility:**
 1. **100% Extensible Python & Web:** You have every single line of anomaly parsing, SQLite persistence, and UI logic fully visible and documented.
@@ -56,13 +56,13 @@ While commercial enterprise platforms like CyCraft Technology are amazing at rea
 ├── requirements.txt       # Essential Python dependencies (fastapi, uvicorn, sqlalchemy, pydantic, rich)
 ├── pytest.ini             # Pytest testing framework settings
 ├── run.py                 # Convenience local FastAPI development runner (python run.py)
-├── cycraft_cli.py         # Advanced Terminal CLI tool (python cycraft_cli.py --alerts)
+├── bradlyai_cli.py         # Advanced Terminal CLI tool (python bradlyai_cli.py --alerts)
 ├── .github/workflows/
 │   └── ci.yml             # Full Multi-Matrix GitHub Actions Continuous Integration pipeline
 ├── tests/
 │   ├── __init__.py
 │   └── test_api.py        # 9 automated integration tests covering all routes (100% passing)
-└── cycraft/               # Main Python Python Package
+└── bradlyai/               # Main Python Python Package
     ├── __init__.py
     ├── main.py            # FastAPI Entrypoint, custom headers, and exception handlers
     ├── config.py          # Environment settings loaded via Pydantic Settings
@@ -96,7 +96,7 @@ Access the Live Platform at `http://localhost:8000/` and Swagger UI Documentatio
 
 ### Managing via Terminal CLI
 ```bash
-python cycraft_cli.py --status
-python cycraft_cli.py --alerts CRITICAL
-python cycraft_cli.py --trigger-attack 0
+python bradlyai_cli.py --status
+python bradlyai_cli.py --alerts CRITICAL
+python bradlyai_cli.py --trigger-attack 0
 ```
