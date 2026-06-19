@@ -1,11 +1,11 @@
-"""
-Pydantic Schemas for AI Security Copilot
-"""
+"""Pydantic Schemas for AI Security Copilot"""
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(..., min_length=1, max_length=4000)
+    stream: bool = Field(False, description="Enable streaming SSE response")
+
 
 class ChatResponse(BaseModel):
     reply: str

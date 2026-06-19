@@ -1,170 +1,129 @@
-"""
-BradlyAI - Driverless SOC & Automated Incident Response Application Entrypoint
-"""
+"""BradlyAI - Driverless SOC & Automated Incident Response Application Entrypoint"""
+import logging
+import time
+import os
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends, Request, HTTPException, status
+from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
-import time
-import os
 
 from bradlyai.config import settings
 from bradlyai.database import engine, Base, SessionLocal
 from bradlyai.models.alert import AlertModel, AlertStorylineModel
 from bradlyai.models.asset import AssetModel, AssetFindingModel
-
 from bradlyai.routers import alerts, asm, air, forensics, mitre, chat, ws, system, ingest
 from bradlyai.services.live_simulation_worker import live_worker
 
-# Initialize Database Tables
-Base.metadata.create_all(bind=engine)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("bradlyai")
+
 
 def seed_database():
     db = SessionLocal()
     try:
         if db.query(AlertModel).count() == 0:
-            print("🌱 Seeding default BradlyAI security alerts to SQLite database...")
+            logger.info("🌱 Seeding default BradlyAI security alerts to SQLite database...")
             default_alerts = [
-                {
-                    "id": "ALT-8921",
-                    "severity": "CRITICAL",
-                    "title": "Suspicious Powershell Execution & Registry Modification",
-                    "endpoint": "DEV-WIN-SRV09",
-                    "ip": "192.168.10.45",
-                    "timestamp": "2 mins ago",
-                    "mitre": "T1059.001 - PowerShell",
-                    "status": "Auto-Contained",
-                    "ai_confidence": "98%",
-                    "storyline": [
-                        {"time": "14:02:11", "event": "User 'svc_jenkins' logged in from unusual IP (45.33.12.9)"},
-                        {"time": "14:02:15", "event": "Spawned hidden PowerShell process with encoded command"},
-                        {"time": "14:02:18", "event": "Attempted LSASS memory dump for credential harvesting"},
-                        {"time": "14:02:19", "event": "BradlyAI detected behavior, killed process, and isolated network interface"}
-                    ]
-                },
-                {
-                    "id": "ALT-8920",
-                    "severity": "HIGH",
-                    "title": "Unauthorized Lateral Movement via SMB Exploitation",
-                    "endpoint": "FIN-WRK-102",
-                    "ip": "192.168.20.12",
-                    "timestamp": "14 mins ago",
-                    "mitre": "T1210 - Exploitation of Remote Services",
-                    "status": "Auto-Contained",
-                    "ai_confidence": "95%",
-                    "storyline": [
-                        {"time": "13:50:01", "event": "High volume of SMB authentication requests to Domain Controller"},
-                        {"time": "13:50:04", "event": "Anomalous service creation detected on remote host"},
-                        {"time": "13:50:06", "event": "BradlyAIR triggered local firewall lockdown and revoked active Kerberos tickets"}
-                    ]
-                },
-                {
-                    "id": "ALT-8919",
-                    "severity": "HIGH",
-                    "title": "Exfiltration Attempt to Known Tor Exit Node",
-                    "endpoint": "ENG-MAC-404",
-                    "ip": "192.168.15.88",
-                    "timestamp": "32 mins ago",
-                    "mitre": "T1048 - Exfiltration Over Alternative Protocol",
-                    "status": "Investigating",
-                    "ai_confidence": "91%",
-                    "storyline": [
-                        {"time": "13:32:10", "event": "Encrypted DNS tunnel established to external domain 'xn--x-9b.com'"},
-                        {"time": "13:32:45", "event": "540MB of archive files staged in /tmp/staging_cache"},
-                        {"time": "13:33:00", "event": "BradlyAIR blocked external IP at gateway and flagged for analyst review"}
-                    ]
-                },
-                {
-                    "id": "ALT-8918",
-                    "severity": "MEDIUM",
-                    "title": "Anomalous Cloud IAM Policy Privilege Escalation",
-                    "endpoint": "AWS-IAM-US-EAST",
-                    "ip": "54.210.85.12",
-                    "timestamp": "1 hour ago",
-                    "mitre": "T1078 - Valid Accounts",
-                    "status": "Resolved",
-                    "ai_confidence": "89%",
-                    "storyline": [
-                        {"time": "12:55:20", "event": "DevOps key attempted to attach 'AdministratorAccess' to 'svc_billing_read'"},
-                        {"time": "12:55:22", "event": "BradlyAI Cloud AI intercepted API call via AWS EventBridge and rolled back IAM policy"}
-                    ]
-                }
+                {"id": "ALT-8921", "severity": "CRITICAL", "title": "Suspicious Powershell Execution & Registry Modification",
+                 "endpoint": "DEV-WIN-SRV09", "ip": "192.168.10.45", "timestamp": "2 mins ago",
+                 "mitre": "T1059.001 - PowerShell", "status": "Auto-Contained", "ai_confidence": "98%",
+                 "storyline": [
+                     {"time": "14:02:11", "event": "User 'svc_jenkins' logged in from unusual IP (45.33.12.9)"},
+                     {"time": "14:02:15", "event": "Spawned hidden PowerShell process with encoded command"},
+                     {"time": "14:02:18", "event": "Attempted LSASS memory dump for credential harvesting"},
+                     {"time": "14:02:19", "event": "BradlyAI detected behavior, killed process, and isolated network interface"},
+                 ]},
+                {"id": "ALT-8920", "severity": "HIGH", "title": "Unauthorized Lateral Movement via SMB Exploitation",
+                 "endpoint": "FIN-WRK-102", "ip": "192.168.20.12", "timestamp": "14 mins ago",
+                 "mitre": "T1210 - Exploitation of Remote Services", "status": "Auto-Contained", "ai_confidence": "95%",
+                 "storyline": [
+                     {"time": "13:50:01", "event": "High volume of SMB authentication requests to Domain Controller"},
+                     {"time": "13:50:04", "event": "Anomalous service creation detected on remote host"},
+                     {"time": "13:50:06", "event": "BradlyAIR triggered local firewall lockdown and revoked active Kerberos tickets"},
+                 ]},
+                {"id": "ALT-8919", "severity": "HIGH", "title": "Exfiltration Attempt to Known Tor Exit Node",
+                 "endpoint": "ENG-MAC-404", "ip": "192.168.15.88", "timestamp": "32 mins ago",
+                 "mitre": "T1048 - Exfiltration Over Alternative Protocol", "status": "Investigating", "ai_confidence": "91%",
+                 "storyline": [
+                     {"time": "13:32:10", "event": "Encrypted DNS tunnel established to external domain 'xn--x-9b.com'"},
+                     {"time": "13:32:45", "event": "540MB of archive files staged in /tmp/staging_cache"},
+                     {"time": "13:33:00", "event": "BradlyAIR blocked external IP at gateway and flagged for analyst review"},
+                 ]},
+                {"id": "ALT-8918", "severity": "MEDIUM", "title": "Anomalous Cloud IAM Policy Privilege Escalation",
+                 "endpoint": "AWS-IAM-US-EAST", "ip": "54.210.85.12", "timestamp": "1 hour ago",
+                 "mitre": "T1078 - Valid Accounts", "status": "Resolved", "ai_confidence": "89%",
+                 "storyline": [
+                     {"time": "12:55:20", "event": "DevOps key attempted to attach 'AdministratorAccess' to 'svc_billing_read'"},
+                     {"time": "12:55:22", "event": "BradlyAI Cloud AI intercepted API call via AWS EventBridge and rolled back IAM policy"},
+                 ]},
             ]
-            
             for alt in default_alerts:
-                db_alt = AlertModel(
-                    id=alt["id"], severity=alt["severity"], title=alt["title"],
-                    endpoint=alt["endpoint"], ip=alt["ip"], timestamp=alt["timestamp"],
-                    mitre=alt["mitre"], status=alt["status"], ai_confidence=alt["ai_confidence"]
-                )
+                db_alt = AlertModel(id=alt["id"], severity=alt["severity"], title=alt["title"],
+                                    endpoint=alt["endpoint"], ip=alt["ip"], timestamp=alt["timestamp"],
+                                    mitre=alt["mitre"], status=alt["status"], ai_confidence=alt["ai_confidence"])
                 for st in alt["storyline"]:
                     db_alt.storyline.append(AlertStorylineModel(time=st["time"], event=st["event"]))
                 db.add(db_alt)
 
         if db.query(AssetModel).count() == 0:
-            print("🌱 Seeding default ASM assets to SQLite database...")
+            logger.info("🌱 Seeding default ASM assets to SQLite database...")
             default_assets = [
-                {
-                    "name": "core-auth-api.bradlyai.internal", "type": "Web Service", "ip": "192.168.1.10",
-                    "owner": "DevOps Team", "risk_score": "Low (12)", "vulnerabilities": 0, "status": "Secure",
-                    "last_scan": "10 mins ago", "findings": []
-                },
-                {
-                    "name": "aws-s3-customer-backups-prod", "type": "Cloud Storage", "ip": "s3.amazonaws.com",
-                    "owner": "Cloud Ops", "risk_score": "Critical (91)", "vulnerabilities": 2, "status": "At Risk",
-                    "last_scan": "2 mins ago", "findings": ["Public Read Access Enabled", "MFA Delete Disabled"]
-                },
-                {
-                    "name": "vpn-gateway-apac.bradlyai.com", "type": "Network Gateway", "ip": "203.0.113.45",
-                    "owner": "IT Sec", "risk_score": "High (74)", "vulnerabilities": 1, "status": "Vulnerable",
-                    "last_scan": "1 hour ago", "findings": ["Unpatched CVE-2024-3400 (SSL-VPN)"]
-                },
-                {
-                    "name": "win-srv-sql-primary", "type": "Database Server", "ip": "192.168.10.2",
-                    "owner": "DBA Team", "risk_score": "Medium (45)", "vulnerabilities": 3, "status": "Monitored",
-                    "last_scan": "30 mins ago", "findings": ["SMBv1 Enabled", "Missing Security Patch KB5034441"]
-                }
+                {"name": "core-auth-api.bradlyai.internal", "type": "Web Service", "ip": "192.168.1.10",
+                 "owner": "DevOps Team", "risk_score": "Low (12)", "vulnerabilities": 0, "status": "Secure",
+                 "last_scan": "10 mins ago", "findings": []},
+                {"name": "aws-s3-customer-backups-prod", "type": "Cloud Storage", "ip": "s3.amazonaws.com",
+                 "owner": "Cloud Ops", "risk_score": "Critical (91)", "vulnerabilities": 2, "status": "At Risk",
+                 "last_scan": "2 mins ago", "findings": ["Public Read Access Enabled", "MFA Delete Disabled"]},
+                {"name": "vpn-gateway-apac.bradlyai.com", "type": "Network Gateway", "ip": "203.0.113.45",
+                 "owner": "IT Sec", "risk_score": "High (74)", "vulnerabilities": 1, "status": "Vulnerable",
+                 "last_scan": "1 hour ago", "findings": ["Unpatched CVE-2024-3400 (SSL-VPN)"]},
+                {"name": "win-srv-sql-primary", "type": "Database Server", "ip": "192.168.10.2",
+                 "owner": "DBA Team", "risk_score": "Medium (45)", "vulnerabilities": 3, "status": "Monitored",
+                 "last_scan": "30 mins ago", "findings": ["SMBv1 Enabled", "Missing Security Patch KB5034441"]},
             ]
-            
             for ast in default_assets:
-                db_ast = AssetModel(
-                    name=ast["name"], type=ast["type"], ip=ast["ip"], owner=ast["owner"],
-                    risk_score=ast["risk_score"], vulnerabilities=ast["vulnerabilities"],
-                    status=ast["status"], last_scan=ast["last_scan"]
-                )
+                db_ast = AssetModel(name=ast["name"], type=ast["type"], ip=ast["ip"], owner=ast["owner"],
+                                    risk_score=ast["risk_score"], vulnerabilities=ast["vulnerabilities"],
+                                    status=ast["status"], last_scan=ast["last_scan"])
                 for f in ast["findings"]:
                     db_ast.findings.append(AssetFindingModel(finding_text=f))
                 db.add(db_ast)
-                
         db.commit()
+        logger.info("✅ Database seeding complete.")
     finally:
         db.close()
 
+
+# ── Ensure tables + seed exist at import time (TestClient compat) ──────
+Base.metadata.create_all(bind=engine)
 seed_database()
 
-# Create FastAPI App
-app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    description="BradlyAI multi-model machine learning mesh backend API providing automated incident response and a true Driverless SOC experience.",
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
 
-# Manage Application Lifecycle (Start / Stop Live Background Simulation Worker)
-@app.on_event("startup")
-def start_app_events():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     if settings.LIVE_SIMULATION_WORKER_ACTIVE:
         live_worker.start(ws_manager=ws.manager, interval=settings.SIMULATION_INTERVAL_SECONDS)
-
-@app.on_event("shutdown")
-def stop_app_events():
+    logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} started — Env: {settings.ENVIRONMENT}")
+    yield
     live_worker.stop()
+    logger.info("🛑 BradlyAI shut down gracefully.")
 
-# Custom Middleware for Execution Timing & Security Branding
+
+app = FastAPI(
+    title=settings.APP_NAME, version=settings.APP_VERSION,
+    description="BradlyAI multi-model machine learning mesh backend API providing automated incident response and a true Driverless SOC experience.",
+    docs_url="/docs", redoc_url="/redoc", lifespan=lifespan,
+)
+
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
@@ -174,39 +133,26 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Autonomous-SOC"] = "BradlyAI Multi-Model Active Engine"
     return response
 
-# Custom Structured Exception Handlers
+
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error_code": "CYCRAFT_API_EXCEPTION",
-            "message": exc.detail,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-        }
-    )
+    return JSONResponse(status_code=exc.status_code, content={
+        "error_code": "BRADLY_API_EXCEPTION", "message": exc.detail,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+    })
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "error_code": "CYCRAFT_VALIDATION_ERROR",
-            "message": "The request payload failed multi-model cyber schema verification.",
-            "details": exc.errors()
-        }
-    )
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={
+        "error_code": "BRADLY_VALIDATION_ERROR",
+        "message": "The request payload failed multi-model cyber schema verification.",
+        "details": exc.errors(),
+    })
 
-# Setup CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-# Include All Routers
+app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
 api_prefix = "/api/v1"
 app.include_router(alerts.router, prefix=api_prefix)
 app.include_router(asm.router, prefix=api_prefix)
@@ -218,22 +164,44 @@ app.include_router(ingest.router, prefix=api_prefix)
 app.include_router(ws.router, prefix=api_prefix)
 app.include_router(system.router, prefix=api_prefix)
 
-# Mount Static Frontend
+
+@app.get("/health", tags=["Health"])
+def health_check():
+    db_ok = False
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        db_ok = True
+    except Exception:
+        pass
+    return {
+        "status": "healthy" if db_ok else "degraded",
+        "app": settings.APP_NAME, "version": settings.APP_VERSION,
+        "environment": settings.ENVIRONMENT, "database": "connected" if db_ok else "disconnected",
+        "worker_active": live_worker.is_running,
+        "uptime": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+    }
+
+
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+
 @app.get("/")
 def serve_frontend_portal():
-    index_path = os.path.join(STATIC_DIR, "index.html")
-    return FileResponse(index_path)
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
 
 @app.get("/style.css")
 def serve_css():
     return FileResponse(os.path.join(STATIC_DIR, "style.css"))
 
+
 @app.get("/app.js")
 def serve_js():
     return FileResponse(os.path.join(STATIC_DIR, "app.js"))
+
 
 @app.get("/data.js")
 def serve_data_js():

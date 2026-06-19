@@ -1,7 +1,4 @@
-"""
-Pytest Integration Tests for BradlyAI FastAPI Backend
-"""
-
+"""Pytest Integration Tests for BradlyAI FastAPI Backend"""
 from fastapi.testclient import TestClient
 from bradlyai.main import app
 
@@ -12,6 +9,14 @@ def test_read_main():
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
+
+
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] in ("healthy", "degraded")
+    assert data["app"] == "BradlyAI - Driverless SOC & Automated Incident Response"
 
 
 def test_get_alerts():
@@ -41,15 +46,8 @@ def test_trigger_attack():
 
 
 def test_ingest_real_logs():
-    """Test the new real log ingestion feature"""
-    logs = """powershell.exe -enc SQBuAHYAbwBrAGUALQBXAGUAYgBSAGUAcQB1AGUAcwB0AA==
-smbclient -L //DC01 -U anonymous
-aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess"""
-
-    response = client.post(
-        "/api/v1/ingest/logs/text",
-        data={"logs": logs}
-    )
+    logs = "powershell.exe -enc SQBuAHYAbwBrAGUALQBXAGUAYgBSAGUAcQB1AGUAcwB0AA==\nsmbclient -L //DC01 -U anonymous\naws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess"
+    response = client.post("/api/v1/ingest/logs/text", data={"logs": logs})
     assert response.status_code == 200
     data = response.json()
     assert data["events_ingested"] >= 1
@@ -57,19 +55,9 @@ aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AdministratorAcc
 
 
 def test_chat_copilot():
-    """
-    Test the AI Copilot with the new real-data version.
-    Must use stream=False to get JSON response.
-    """
-    # Ingest real logs first
     logs = "powershell.exe -enc SQBuAHYAbwBrAGUALQBXAGUAYgBSAGUAcQB1AGUAcwB0AA==\nFailed login attempt for sa"
     client.post("/api/v1/ingest/logs/text", data={"logs": logs})
-
-    # Use stream=False to get normal JSON
-    response = client.post(
-        "/api/v1/chat",
-        json={"message": "Summarize today's top critical threats", "stream": False}
-    )
+    response = client.post("/api/v1/chat", json={"message": "Summarize today's top critical threats", "stream": False})
     assert response.status_code == 200
     data = response.json()
     assert "reply" in data
@@ -103,4 +91,6 @@ def test_system_config():
 def test_system_reset():
     response = client.post("/api/v1/system/reset-database")
     assert response.status_code == 200
-    assert response.json()["status"] == "RESET"
+    data = response.json()
+    assert data["status"] == "RESET"
+    assert "alerts_removed" in data

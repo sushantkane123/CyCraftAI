@@ -1,51 +1,53 @@
-
-import os
+"""BradlyAI Unified LLM Client — async HTTP via httpx"""
+import logging
 from bradlyai.config import settings
 
+logger = logging.getLogger("bradlyai.llm")
+
+
 class LLMClient:
-    """
-    Unified LLM Client to handle multiple providers (Groq, OpenAI).
-    Supports open-source Llama-3 via Groq for high-speed free tier.
-    """
     def __init__(self):
         self.provider = settings.LLM_PROVIDER.lower()
         self.api_key = settings.GROQ_API_KEY if self.provider == "groq" else settings.OPENAI_API_KEY
 
-    async def generate_response(self, prompt: str, system_prompt: str = "You are a professional SOC Analyst."):
+    async def generate_response(self, prompt: str, system_prompt: str = "You are a professional SOC Analyst.") -> str:
         if not self.api_key:
-            return "⚠️ API Key missing. Please add GROQ_API_KEY or OPENAI_API_KEY to your .env file or config.py"
-
+            return "No API key configured. Add GROQ_API_KEY or OPENAI_API_KEY to your .env file."
         try:
             if self.provider == "groq":
-                import requests
-                headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-                payload = {
-                    "model": "llama3-70b-8192",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.2
-                }
-                response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload)
-                return response.json()['choices'][0]['message']['content']
-
+                return await self._call_groq(prompt, system_prompt)
             elif self.provider == "openai":
-                from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=self.api_key)
-                response = await client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.2
-                )
-                return response.choices[0].message.content
-            
-            else:
-                return "Unsupported provider."
+                return await self._call_openai(prompt, system_prompt)
+            return f"Unsupported provider: {self.provider}"
         except Exception as e:
-            return f"❌ LLM Error: {str(e)}"
+            logger.error(f"LLM call failed: {e}")
+            return f"LLM Error: {str(e)}"
+
+    async def _call_groq(self, prompt: str, system_prompt: str) -> str:
+        import httpx
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                json={"model": "llama3-70b-8192", "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}], "temperature": 0.2},
+            )
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+
+    async def _call_openai(self, prompt: str, system_prompt: str) -> str:
+        import httpx
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                json={"model": settings.DEFAULT_AI_MODEL, "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}], "temperature": 0.2},
+            )
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+
 
 llm_client = LLMClient()

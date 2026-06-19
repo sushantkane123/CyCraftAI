@@ -1,11 +1,11 @@
-"""
-BradlyAI - Real Detection Engine (Phase 1)
-Rule-based detection on real logs.
-"""
+"""BradlyAI - Real Detection Engine — rule-based detection on real logs"""
 import re
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+
+logger = logging.getLogger("bradlyai.detection")
 
 @dataclass
 class DetectionRule:
@@ -36,7 +36,7 @@ class RealDetectionEngine:
             DetectionRule("R001", "PowerShell Encoded Command", "CRITICAL", "T1059.001 - PowerShell",
                 [r"powershell.*-enc", r"powershell.*-EncodedCommand", r"FromBase64String", r"IEX\s*\("]),
             DetectionRule("R002", "Suspicious SMB Lateral Movement", "HIGH", "T1210 - Exploitation of Remote Services",
-                [r"smb|445.*auth", r"anonymous.*logon", r"lateral.*movement"]),
+                [r"smb.*445.*auth", r"anonymous.*logon", r"lateral.*movement"]),
             DetectionRule("R003", "Data Exfiltration Attempt", "HIGH", "T1048 - Exfiltration",
                 [r"exfil|large.*transfer", r"\.zip.*upload", r"tor|onion|mega\.nz"]),
             DetectionRule("R004", "Cloud IAM Privilege Escalation", "HIGH", "T1078 - Valid Accounts",
@@ -52,28 +52,22 @@ class RealDetectionEngine:
         message = (str(event.get("message", "")) + " " + str(event.get("raw", ""))).lower()
         source = event.get("source", event.get("host", "unknown-host"))
         ip = event.get("ip", event.get("src_ip", "0.0.0.0"))
-
+        now = datetime.now(timezone.utc)
         for rule in self.rules:
             for pattern in rule.patterns:
                 if re.search(pattern, message, re.IGNORECASE):
                     self.counter += 1
                     alert_id = f"ALT-{self.counter}"
+                    logger.info(f"Rule {rule.id} matched → {alert_id}: {rule.name} on {source}")
                     return RealAlert(
-                        id=alert_id,
-                        severity=rule.severity,
-                        title=rule.name,
-                        endpoint=source,
-                        ip=ip,
-                        timestamp="Just now",
-                        mitre=rule.mitre,
-                        status="Detected",
-                        ai_confidence="87%",
+                        id=alert_id, severity=rule.severity, title=rule.name, endpoint=source, ip=ip,
+                        timestamp=now.strftime("%Y-%m-%d %H:%M:%S UTC"), mitre=rule.mitre,
+                        status="Detected", ai_confidence="87%",
                         storyline=[
-                            {"time": datetime.utcnow().strftime("%H:%M:%S"), "event": f"Event received from {source}"},
-                            {"time": datetime.utcnow().strftime("%H:%M:%S"), "event": f"Matched rule {rule.id}: {rule.name}"},
+                            {"time": now.strftime("%H:%M:%S"), "event": f"Event received from {source}"},
+                            {"time": now.strftime("%H:%M:%S"), "event": f"Matched rule {rule.id}: {rule.name}"},
                         ],
-                        rule_id=rule.id,
-                        raw_event=event
+                        rule_id=rule.id, raw_event=event,
                     )
         return None
 

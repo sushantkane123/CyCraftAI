@@ -1,16 +1,15 @@
-"""
-BradlyAI - Enhanced Real-World Copilot (Phase 1)
-Analyzes actual ingested logs instead of hardcoded responses.
-"""
-import requests
+"""BradlyAI - Enhanced Real-World Copilot — analyzes actual ingested logs"""
 import asyncio
+import logging
 from typing import AsyncGenerator
-from bradlyai.config import settings
+from bradlyai.services.llm_client import llm_client
 from .log_ingestion import log_ingestion
 
+logger = logging.getLogger("bradlyai.enhanced_copilot")
+
+
 class RealWorldCyberCopilot:
-    def __init__(self):
-        self.system_prompt = "You are an elite BradlyAI Cyber-AI Security Analyst. Analyze the REAL security logs and alerts ingested by the user. Be precise and actionable."
+    SYSTEM_PROMPT = "You are an elite BradlyAI Cyber-AI Security Analyst. Analyze the REAL security logs and alerts ingested by the user. Be precise and actionable."
 
     def _get_real_context(self) -> str:
         alerts = log_ingestion.get_alerts(5)
@@ -25,34 +24,32 @@ class RealWorldCyberCopilot:
         return ctx
 
     def get_reply(self, query: str) -> str:
-        context = self._get_real_context()
-        if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.startswith("sk-"):
-            try:
-                res = requests.post("https://api.openai.com/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}", "Content-Type": "application/json"},
-                    json={"model": settings.DEFAULT_AI_MODEL, "messages": [
-                        {"role": "system", "content": self.system_prompt + "\n" + context},
-                        {"role": "user", "content": query}
-                    ], "max_tokens": 650}, timeout=15)
-                if res.status_code == 200:
-                    return res.json()["choices"][0]["message"]["content"]
-            except Exception as e: print(f"OpenAI error: {e}")
-
         q = query.lower()
         alerts = log_ingestion.get_alerts(5)
         if ("summary" in q or "what happened" in q) and alerts:
-            return "Real alerts from your logs:\n" + "\n".join([f"• {a['title']} on {a['endpoint']} (Rule {a['rule_id']})" for a in alerts])
+            return "Real alerts from your logs:\n" + "\n".join([f"  {a['title']} on {a['endpoint']} (Rule {a['rule_id']})" for a in alerts])
         if "yara" in q and alerts:
             a = alerts[0]
-            return f'rule CyCraft_{a["rule_id"]} {{ strings: $s = /powershell|VirtualAllocEx/i condition: $s }}'
+            return f"rule BradlyAI_{a['rule_id']} {{\n    meta:\n        description = \"Auto-generated from {a['title']}\"\n        author = \"BradlyAI Enhanced Copilot\"\n    strings:\n        $s = /powershell|VirtualAllocEx|CreateRemoteThread/i\n    condition:\n        $s\n}}"
         if not alerts:
-            return "No real data ingested. Use /ingest/logs/text or upload a file."
+            return "No real data ingested yet. Use /api/v1/ingest/logs/text to upload logs, or upload a file via /api/v1/ingest/logs/upload."
+        context = self._get_real_context()
         return f"Analyzed your real data:\n{context}\nQuery: {query}"
 
+    async def get_reply_async(self, query: str) -> str:
+        if llm_client.api_key:
+            try:
+                context = self._get_real_context()
+                return await llm_client.generate_response(f"{self.SYSTEM_PROMPT}\n{context}\n\nUser: {query}", self.SYSTEM_PROMPT)
+            except Exception as e:
+                logger.warning(f"LLM failed, offline: {e}")
+        return self.get_reply(query)
+
     async def get_reply_stream(self, query: str):
-        reply = self.get_reply(query)
+        reply = await self.get_reply_async(query)
         for word in reply.split(" "):
             await asyncio.sleep(0.01)
             yield word + " "
+
 
 real_copilot = RealWorldCyberCopilot()
