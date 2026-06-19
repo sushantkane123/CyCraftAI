@@ -1,56 +1,55 @@
 # 🛡️ BradlyAI — Advanced Python Driverless SOC & Incident Response Platform
 
-![BradlyAI Branding](https://img.shields.io/badge/BradlyAI%20Technology-AI%20Cyber%20Security-00f0ff?style=for-the-badge)
-![Driverless Status](https://img.shields.io/badge/Driverless%20SOC-100%25%20Autonomous-10b981?style=for-the-badge)
+![BradlyAI](https://img.shields.io/badge/BradlyAI%20Technology-AI%20Cyber%20Security-00f0ff?style=for-the-badge)
+![Driverless](https://img.shields.io/badge/Driverless%20SOC-100%25%20Autonomous-10b981?style=for-the-badge)
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%2B%20SQLite-3b82f6?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-2.1.0--PRO-8b5cf6?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-2.2.0--PRO-8b5cf6?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-11%2F11%20Passing-22c55e?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-Welcome to the definitive full-stack **Python (FastAPI)** repository and interactive enterprise dashboard for **BradlyAI**, Asia's leading AI-driven cybersecurity platform. Engineered for absolute agility, this project gives developers complete sovereign control over their Security Operations Center (SOC) with real OpenAI / Groq generative streaming, WebSockets, Web Audio feedback, and SQLite SIEM persistence.
+Welcome to the definitive full-stack **Python (FastAPI)** repository and interactive enterprise dashboard for **BradlyAI**, an AI-driven cybersecurity platform. This project gives developers complete control over their Security Operations Center (SOC) with real OpenAI / Groq generative streaming, WebSockets, Web Audio feedback, SQLite SIEM persistence, and **Wazuh SIEM integration** with full incident lifecycle management.
 
 ---
 
-## 🌟 What makes this Architecture Superior?
+## 🌟 Architecture Highlights
 
-While commercial enterprise platforms are amazing at real-world multi-tenant threat hunting, they act as closed-source proprietary black boxes requiring heavy multi-year licensing.
-
-**This repository gives you absolute open-architecture agility:**
-
-1. **100% Extensible Python & Web:** Every single line of anomaly parsing, SQLite persistence, and UI logic is fully visible and documented.
-2. **True Generative AI Integration:** Connect your real **OpenAI** or **Groq** API keys via `.env` or the in-app SOC Settings modal. v2.1 switches to fully **async HTTP** (`httpx`) for zero-blocking LLM calls.
-3. **Continuous Background Telemetry Simulation:** An async worker (`LiveSimulationWorker`) generates realistic organic packet logs, persists them to SQLite, and broadcasts via WebSockets in real time.
-4. **Standalone Web Audio Synthesizer:** Custom JavaScript `CyberAudio` class generates laser, shield, alarm, and radar sound feedback with **zero external sound files or CDNs**.
-5. **Async-First Architecture (v2.1):** `aiosqlite` + `AsyncSession` for non-blocking DB operations, async LLM client, and structured logging throughout.
-6. **Production-Ready Health Checks:** `GET /health` returns DB connectivity, worker status, and uptime — ready for load balancers and monitoring.
+1. **100% Extensible Python & Web:** Every line of anomaly parsing, SQLite persistence, and UI logic is visible and documented.
+2. **True Generative AI:** Connect **OpenAI** or **Groq** API keys via `.env` or the in-app SOC Settings modal. Async HTTP (`httpx`) for zero-blocking LLM calls.
+3. **Continuous Background Telemetry:** Async worker generates realistic packet logs, persists to SQLite, and broadcasts via WebSockets.
+4. **Standalone Web Audio:** Custom `CyberAudio` class — laser, shield, alarm, radar sounds with **zero external files**.
+5. **Async-First Architecture:** `aiosqlite` + `AsyncSession` for non-blocking DB, async LLM client, structured logging.
+6. **Wazuh SIEM Integration:** Full incident lifecycle — Alert → Detect → Investigate → Evidence → Closure.
+7. **Health Check:** `GET /health` returns DB connectivity, worker status, uptime — ready for monitoring.
 
 ---
 
-## 🚀 Key Interactive Dashboard Features
+## 🚀 Dashboard Features
 
-### 📊 1. Executive Dashboard & Live Cyber Radar
-- **Enterprise Status Cards:** Digital Resilience Index, Autonomous Containment Rate (99.4%), Mean Time To Respond (MTTR), monitored SQLite endpoints.
-- **Floating Diagnostic Node Hubs:** Hover or click on regional Pods in the Live Multi-Model Threat Map to inspect ping latencies, active EDR mesh agents, and CPU triage loads.
-- **Activity Trends Canvas:** Spline charts showing real-time driverless interceptions vs. manual analyst workflows.
+### 📊 Executive Dashboard & Live Cyber Radar
+- Enterprise Status Cards: Digital Resilience Index, Autonomous Containment Rate (99.4%), MTTR, monitored endpoints.
+- Floating Diagnostic Node Hubs on the Live Multi-Model Threat Map with ping latencies, EDR agents, CPU loads.
+- Activity Trends Canvas with real-time driverless interception charts.
 
-### ⚡ 2. Automated Incident Response (AIR) Live Pipeline
-- **Autonomous Demo:** Select adversary scenarios (**APT29 Lateral Movement** vs **Zero-Day Supply Chain**) and click **Start Autonomous AIR Resolution** to watch FastAPI execute sub-second containment with typewriter-style streaming console logs.
+### ⚡ Automated Incident Response (AIR) Live Pipeline
+- Select adversary scenarios (**APT29 Lateral Movement** vs **Zero-Day Supply Chain**) and watch sub-second containment with typewriter-style streaming logs.
 
-### 🌐 3. Attack Surface Management (ASM)
-- **Zero-Day Risk Inventory:** Monitor web services, S3 buckets, and Kubernetes clusters. Click **Autonomous AI Auto-Remediate** to instantly issue virtual firewall patches.
+### 🌐 Attack Surface Management (ASM)
+- Zero-Day Risk Inventory: web services, S3 buckets, Kubernetes clusters. One-click **Auto-Remediate** applies virtual firewall patches.
 
-### 🔍 4. AI Threat Hunter & Memory Forensics
-- **Live Memory Branches:** Dissect parent-child execution process trees highlighting reflective DLL injections.
-- **Tactile Actions:** Execute **⚡ Kill PID**, **🛡️ Isolate Memory**, and **💾 Download Memory Dump** from the UI.
+### 🔍 AI Threat Hunter & Memory Forensics
+- Live Memory Branches: parent-child process trees with reflective DLL injection markers.
+- Tactile Actions: **⚡ Kill PID**, **🛡️ Isolate Memory**, **💾 Download Memory Dump**.
 
-### ⚙️ 5. System Configuration & AI Connect Modal
-- Open **SOC Settings** to paste your **OpenAI / Groq API Keys**, adjust auto-containment thresholds, toggle telemetry workers, or purge the SQLite database.
+### ⚙️ System Configuration
+- SOC Settings modal: paste API keys, adjust auto-containment thresholds, toggle telemetry workers, purge database.
 
-### 💬 6. Cyber-AI Security Copilot Chatbot
-- Pre-baked quick prompt chips + custom queries via **FastAPI chunk-by-chunk streaming (`StreamingResponse`)**. Now powered by unified async LLM client with Groq (Llama-3) and OpenAI (GPT-4) support.
+### 💬 AI Security Copilot
+- Pre-baked quick prompts + custom queries via **FastAPI chunk-by-chunk streaming (`StreamingResponse`)**. Supports Groq (Llama-3) and OpenAI (GPT-4).
 
-### 🆕 7. Real Log Ingestion & Detection Engine (v2.1)
-- Upload real security logs via REST API (`/api/v1/ingest/logs/text`, `/upload`) and get instant rule-based detection with 6 built-in detection rules covering PowerShell attacks, SMB lateral movement, data exfiltration, IAM privilege escalation, process injection, and brute force.
+### 🆕 Wazuh SIEM Integration (API)
+- `/api/v1/integration/wazuh/ingest` — Receive Wazuh webhook alerts
+- `/api/v1/integration/wazuh/full-pipeline` — One-call: alert → detect → investigate → evidence → close
+- `/api/v1/integration/incidents` — Full incident lifecycle management with 7-step investigation, IoC extraction, YARA rules, and closure reports
 
 ---
 
@@ -58,41 +57,39 @@ While commercial enterprise platforms are amazing at real-world multi-tenant thr
 
 ```text
 .
-├── .env.example           # Self-documenting environment config template
-├── .gitignore             # Excludes venvs, local SQLite DBs, preview caches
-├── docker-compose.yml     # One-click deployment (docker-compose up -d --build)
-├── Dockerfile             # Multi-stage optimized Python 3.11 Slim container
-├── README.md              # Documentation & deployment guides
-├── CHANGELOG.md           # Full version history v1.0.0 → v2.1.0
-├── CONTRIBUTING.md        # Developer onboarding & contribution guide
+├── .env.example           # Environment config template
+├── .gitignore
+├── docker-compose.yml     # One-click Docker deployment
+├── Dockerfile             # Python 3.11 Slim container
+├── README.md
+├── CHANGELOG.md           # Full version history
+├── CONTRIBUTING.md        # Developer onboarding guide
 ├── LICENSE                # MIT License
-├── requirements.txt       # Dependencies (fastapi, uvicorn, sqlalchemy, httpx, aiosqlite, etc.)
-├── pytest.ini             # Pytest configuration
-├── run.py                 # Local FastAPI development runner (python run.py)
-├── bradlyai_cli.py        # Advanced Terminal CLI (python bradlyai_cli.py --alerts)
+├── requirements.txt       # Python dependencies
+├── pytest.ini
+├── run.py                 # Local dev runner
+├── bradlyai_cli.py        # Terminal CLI tool
 ├── .github/workflows/
-│   └── ci.yml             # GitHub Actions CI pipeline
-├── sample_logs/           # Sample log files for ingestion testing
+│   └── ci.yml             # GitHub Actions CI
+├── sample_logs/           # Sample logs for ingestion testing
 ├── tests/
-│   ├── __init__.py
 │   └── test_api.py        # 11 integration tests — all passing ✅
 └── bradlyai/              # Main Python package
-    ├── __init__.py
     ├── main.py            # FastAPI entrypoint, lifespan, middleware, health check
-    ├── config.py          # Pydantic Settings with .env support (14 config fields)
-    ├── database.py        # SQLAlchemy sync + async engine & session management
-    ├── models/            # ORM models (AlertModel, AssetModel, StorylineModel)
-    ├── schemas/           # Pydantic request/response validation schemas
-    ├── services/          # Business logic (AI engine, copilot, detection, log ingestion, AIR)
-    ├── routers/           # Modular API routes (/api/v1/alerts, /chat, /ingest, /ws, etc.)
-    └── static/            # Self-contained SPA (index.html, style.css, app.js, data.js)
+    ├── config.py          # Pydantic Settings (14 config fields)
+    ├── database.py        # SQLAlchemy sync + async engine
+    ├── models/            # ORM models (Alert, Asset, Storyline)
+    ├── schemas/           # Pydantic validation schemas
+    ├── services/          # AI engine, copilot, detection, log ingestion, incident manager, AIR
+    ├── routers/           # API routes (/api/v1/alerts, /chat, /ingest, /integration, /ws, etc.)
+    └── static/            # Self-contained SPA (index.html, style.css, app.js)
 ```
 
 ---
 
-## 🛠️ How to Pull & Deploy Locally
+## 🛠️ Quick Start
 
-### Option A: Clone & Run via Docker
+### Option A: Docker
 
 ```bash
 git clone https://github.com/sushantkane123/BradlyAI.git
@@ -100,21 +97,22 @@ cd BradlyAI
 docker-compose up -d --build
 ```
 
-### Option B: Native Python Development
+### Option B: Native Python
 
 ```bash
 git clone https://github.com/sushantkane123/BradlyAI.git
 cd BradlyAI
-python3 -m venv venv
-source venv/bin/activate
+python -m venv venv
+source venv/bin/activate      # Linux/Mac
+venv\Scripts\activate         # Windows
 pip install -r requirements.txt
-cp .env.example .env        # Edit .env with your API keys
+cp .env.example .env           # Edit .env with your API keys (optional)
 python run.py
 ```
 
-Access the live dashboard at **`http://localhost:8000/`** and Swagger UI at **`http://localhost:8000/docs`**.
+Access the dashboard at **`http://localhost:8000/`** and Swagger docs at **`http://localhost:8000/docs`**.
 
-### Managing via Terminal CLI
+### CLI Usage
 
 ```bash
 python bradlyai_cli.py --status
@@ -130,20 +128,33 @@ python bradlyai_cli.py --trigger-attack 0
 |---|---|---|
 | `/health` | GET | Health check — DB, worker, uptime |
 | `/api/v1/alerts` | GET | List/search/paginate security alerts |
+| `/api/v1/alerts/{id}` | GET | Single alert with full storyline |
 | `/api/v1/alerts/trigger-simulated-attack` | POST | Trigger a simulated cyber attack |
 | `/api/v1/asm/assets` | GET | Attack Surface Management inventory |
 | `/api/v1/asm/remediate/{id}` | POST | Auto-remediate an asset |
+| `/api/v1/asm/rescan` | POST | Global asset deep scan |
 | `/api/v1/air/run-pipeline/{idx}` | POST | Execute AIR pipeline scenario |
 | `/api/v1/forensics/process-tree/{host}` | GET | Memory process tree for a host |
+| `/api/v1/forensics/deep-scan/{host}` | POST | AI memory deep scan |
 | `/api/v1/mitre/matrix` | GET | MITRE ATT&CK coverage matrix |
-| `/api/v1/chat` | POST | AI Copilot (streaming or non-streaming) |
+| `/api/v1/mitre/technique/{id}` | GET | Defensive guide for a technique |
+| `/api/v1/chat` | POST | AI Copilot (streaming or JSON) |
+| `/api/v1/chat/health` | GET | Copilot health + provider status |
 | `/api/v1/ingest/logs/text` | POST | Ingest raw security logs |
+| `/api/v1/ingest/logs/json` | POST | Ingest JSON logs |
 | `/api/v1/ingest/logs/upload` | POST | Upload log file |
-| `/api/v1/ws/stream` | WS | Real-time WebSocket telemetry stream |
+| `/api/v1/ingest/events` | GET | View ingested events |
+| `/api/v1/ingest/alerts` | GET | View real detection alerts |
+| `/api/v1/integration/wazuh/ingest` | POST | Wazuh SIEM webhook |
+| `/api/v1/integration/wazuh/full-pipeline` | POST | 🚀 Full pipeline: alert → closure |
+| `/api/v1/integration/incidents` | GET | List all incidents |
+| `/api/v1/integration/incidents/{id}` | GET | Full incident detail |
+| `/api/v1/integration/incidents/{id}/investigate` | POST | Run 7-step investigation |
+| `/api/v1/integration/incidents/{id}/close` | POST | Close ticket + generate report |
+| `/api/v1/integration/wazuh/health` | GET | Integration health + stats |
+| `/api/v1/ws/stream` | WS | Real-time WebSocket telemetry |
 | `/api/v1/system/config` | GET/POST | View/update system configuration |
-| `/api/v1/system/reset-database` | POST | Purge and reseed the database |
-
-Full interactive docs at **`http://localhost:8000/docs`** and **`http://localhost:8000/redoc`**.
+| `/api/v1/system/reset-database` | POST | Purge and reseed database |
 
 ---
 
@@ -155,24 +166,57 @@ pytest tests/ -v
 ```
 
 ```
-tests/test_api.py::test_read_main           ✅ PASSED
-tests/test_api.py::test_health_check        ✅ PASSED
-tests/test_api.py::test_get_alerts          ✅ PASSED
-tests/test_api.py::test_get_assets          ✅ PASSED
-tests/test_api.py::test_trigger_attack      ✅ PASSED
-tests/test_api.py::test_ingest_real_logs    ✅ PASSED
-tests/test_api.py::test_chat_copilot        ✅ PASSED
-tests/test_api.py::test_get_mitre_matrix    ✅ PASSED
-tests/test_api.py::test_get_forensic_tree   ✅ PASSED
-tests/test_api.py::test_system_config       ✅ PASSED
-tests/test_api.py::test_system_reset        ✅ PASSED
+tests/test_api.py::test_read_main           ✅
+tests/test_api.py::test_health_check        ✅
+tests/test_api.py::test_get_alerts          ✅
+tests/test_api.py::test_get_assets          ✅
+tests/test_api.py::test_trigger_attack      ✅
+tests/test_api.py::test_ingest_real_logs    ✅
+tests/test_api.py::test_chat_copilot        ✅
+tests/test_api.py::test_get_mitre_matrix    ✅
+tests/test_api.py::test_get_forensic_tree   ✅
+tests/test_api.py::test_system_config       ✅
+tests/test_api.py::test_system_reset        ✅
+```
+
+---
+
+## 🛡️ Wazuh SIEM Integration
+
+BradlyAI connects to your customer's Wazuh SIEM for fully autonomous incident response.
+
+### Wazuh Configuration
+
+Add to `ossec.conf`:
+
+```xml
+<integration>
+  <name>custom-webhook</name>
+  <hook_url>http://BRADLYAI_HOST:8000/api/v1/integration/wazuh/ingest</hook_url>
+  <level>3</level>
+</integration>
+```
+
+### Pipeline Flow
+
+```
+Wazuh Alert → BradlyAI Detection (6 rules) → Auto-create Incident
+    → 7-Step Investigation → Evidence Collection → Auto-Containment
+    → Closure Report → Ticket Closed
+```
+
+### Quick Demo (PowerShell)
+
+```powershell
+$body = '{"rule_level":12,"rule_description":"Suspicious PowerShell Execution","agent_name":"WEB-SRV01","agent_ip":"192.168.1.100","mitre_id":"T1059.001","auto_close":true}'
+Invoke-RestMethod -Uri http://localhost:8000/api/v1/integration/wazuh/full-pipeline -Method POST -Body $body -ContentType "application/json"
 ```
 
 ---
 
 ## ⚙️ Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env`:
 
 | Variable | Default | Description |
 |---|---|---|
@@ -182,32 +226,26 @@ Copy `.env.example` to `.env` and configure:
 | `AUTO_CONTAINMENT_THRESHOLD` | `0.85` | AI confidence threshold for auto-containment |
 | `LIVE_SIMULATION_WORKER_ACTIVE` | `true` | Enable background telemetry simulation |
 | `SIMULATION_INTERVAL_SECONDS` | `30` | Seconds between simulated alerts |
-| `RATE_LIMIT_ENABLED` | `true` | Enable API rate limiting |
 | `ENVIRONMENT` | `development` | Deployment environment |
 
 ---
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, code style guide, and pull request process.
-
----
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, style guide, and PR process.
 
 ## 📄 License
 
-MIT — see [LICENSE](LICENSE) for details.
-
----
+MIT — see [LICENSE](LICENSE).
 
 ## 📝 Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-### v2.1.0 Highlights (2026-06-19)
+### v2.2.0 Highlights
 
-- 🔧 Fixed 6 critical bugs (missing methods, broken routes, rebrand residue, config gaps)
-- ⚡ Async DB (`aiosqlite`) + async HTTP LLM client (`httpx`)
-- 🩺 Health check endpoint (`GET /health`)
-- 📝 Structured logging replacing all `print()` calls
-- 🆕 `.env.example`, `LICENSE`, `CONTRIBUTING.md`, `CHANGELOG.md`
-- 🧪 11/11 tests passing (up from 7/10)
+- 🛡️ Wazuh SIEM integration with full incident lifecycle API
+- 🚀 One-call pipeline: alert → detect → investigate → evidence → close
+- 🔧 6 critical bugs fixed, async architecture, structured logging
+- 🩺 Health check endpoint
+- 🧪 11/11 tests passing
