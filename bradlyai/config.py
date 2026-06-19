@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "BradlyAI - Driverless SOC & Automated Incident Response"
     APP_VERSION: str = "2.1.0-PRO"
     ENVIRONMENT: str = "development"
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
 
     # ── Database ───────────────────────────────────────────────────────
     DATABASE_URL: str = "sqlite+aiosqlite:///./bradlyai_soc.db"

@@ -47,13 +47,32 @@ def update_system_config(req: SystemConfigUpdate):
     if req.live_simulation_active is not None:
         settings.LIVE_SIMULATION_WORKER_ACTIVE = req.live_simulation_active
     logger.info("System configuration updated.")
-    return {"status": "UPDATED", "message": "BradlyAI Advanced System Configuration successfully updated.", "config": get_system_config()}
+    return {
+        "status": "UPDATED",
+        "message": "BradlyAI Advanced System Configuration successfully updated.",
+        "config": get_system_config(),
+    }
 
 
 @router.post("/reset-database")
 def reset_siem_database(db: Session = Depends(get_db)):
+    """Clear all alerts and immediately re-seed the database."""
+    from bradlyai.models.alert import AlertStorylineModel
+    from bradlyai.models.asset import AssetModel, AssetFindingModel
+    from bradlyai.main import seed_database
+
     count = db.query(AlertModel).count()
+    db.query(AlertStorylineModel).delete()
     db.query(AlertModel).delete()
     db.commit()
-    logger.warning(f"Database reset — {count} alerts purged.")
-    return {"status": "RESET", "message": f"Live SIEM Alert Database cleared ({count} alerts removed).", "alerts_removed": count}
+
+    logger.warning(f"Database reset — {count} alerts purged, re-seeding.")
+    seed_database()
+
+    new_count = db.query(AlertModel).count()
+    return {
+        "status": "RESET",
+        "message": f"Live SIEM Alert Database cleared ({count} alerts removed) and re-seeded with {new_count} default alerts.",
+        "alerts_removed": count,
+        "alerts_re_seeded": new_count,
+    }
