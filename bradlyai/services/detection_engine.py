@@ -71,4 +71,12 @@ class RealDetectionEngine:
                     )
         return None
 
+    @property
+    def rule_count(self) -> int:
+        return len(self.rules)
+
+    @property
+    def total_detections(self) -> int:
+        return self.counter - 10000
+
 detection_engine = RealDetectionEngine()

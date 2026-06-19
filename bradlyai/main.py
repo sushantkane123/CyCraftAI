@@ -15,7 +15,7 @@ from bradlyai.config import settings
 from bradlyai.database import engine, Base, SessionLocal
 from bradlyai.models.alert import AlertModel, AlertStorylineModel
 from bradlyai.models.asset import AssetModel, AssetFindingModel
-from bradlyai.routers import alerts, asm, air, forensics, mitre, chat, ws, system, ingest
+from bradlyai.routers import alerts, asm, air, forensics, mitre, chat, ws, system, ingest, integration
 from bradlyai.services.live_simulation_worker import live_worker
 
 logging.basicConfig(
@@ -161,6 +161,7 @@ app.include_router(forensics.router, prefix=api_prefix)
 app.include_router(mitre.router, prefix=api_prefix)
 app.include_router(chat.router, prefix=api_prefix)
 app.include_router(ingest.router, prefix=api_prefix)
+app.include_router(integration.router, prefix=api_prefix)
 app.include_router(ws.router, prefix=api_prefix)
 app.include_router(system.router, prefix=api_prefix)
 
