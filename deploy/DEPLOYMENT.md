@@ -39,6 +39,45 @@ The dashboard is now accessible at:
 - `http://localhost:8000/` (this machine)
 - `http://<your-LAN-IP>:8000/` (any device on the same network)
 
+### Windows users — pick your shell
+
+The `deploy/` directory ships with **four** script families so you don't need Git Bash:
+
+| Shell | Install | Start | Stop | Status |
+|-------|---------|-------|------|--------|
+| **cmd.exe** | `deploy\install.bat` | `deploy\start.bat` | `deploy\stop.bat` | `deploy\status.bat` |
+| **PowerShell** | `.\deploy\install.ps1` | `.\deploy\start.ps1` | `.\deploy\stop.ps1` | `.\deploy\status.ps1` |
+| **Git Bash** (if installed) | `./deploy/install.sh` | `./deploy/start.sh` | `./deploy/stop.sh` | `./deploy/status.sh` |
+| **WSL** (if installed) | `./deploy/install.sh` | `./deploy/start.sh` | `./deploy/stop.sh` | `./deploy/status.sh` |
+
+PowerShell example (recommended for Windows):
+```powershell
+# Run from project root
+.\deploy\install.ps1
+.\deploy\start.ps1
+# Open http://localhost:8000
+.\deploy\status.ps1   # check health
+.\deploy\stop.ps1     # stop
+```
+
+cmd.exe example:
+```cmd
+deploy\install.bat
+deploy\start.bat
+REM open http://localhost:8000
+deploy\status.bat
+deploy\stop.bat
+```
+
+If PowerShell blocks the script, run once:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+**Prerequisites on Windows:**
+- Python 3.10+ from https://www.python.org/downloads/ (tick "Add Python to PATH")
+- That's it — no Git Bash, no WSL, no Docker required
+
 ---
 
 ## Mode B — Docker
