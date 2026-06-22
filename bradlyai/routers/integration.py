@@ -11,6 +11,10 @@ from pydantic import BaseModel, Field
 
 from bradlyai.services.detection_engine import detection_engine
 from bradlyai.services.log_ingestion import log_ingestion
+from bradlyai.services.alert_normalizer import normalize
+from bradlyai.services.l1_decision_engine import l1_engine
+from bradlyai.services.auto_closer import auto_closer
+
 from bradlyai.services.incident_manager import (
     incident_manager, Incident, IncidentStatus, IncidentSeverity,
 )
@@ -116,14 +120,14 @@ def _wazuh_alert_to_dict(alert: WazuhAlert) -> dict:
 # ── INGEST: Wazuh Webhook ─────────────────────────────────────────────
 
 @router.post("/wazuh/ingest")
-async def wazuh_webhook_ingest(payload: WazuhWebhookPayload):
+async def wazuh_webhook_ingest(payload: WazuhWebhookPayload, run_l1: bool = Query(True, description="Run L1 Agent decision on each alert")):
     """
     STEP 1: Receive alerts from Wazuh SIEM via webhook.
 
-    For each alert:
-    - Runs through BradlyAI detection engine
-    - Ingests into the log pipeline
-    - Optionally creates an incident (if auto_create=true)
+    NEW: Each alert now runs through the L1 Agent FIRST. If the agent
+    decides CLOSE (it's a false positive or duplicate), the alert is
+    archived in Wazuh via the Wazuh Manager API (if enabled). If the
+    agent decides ESCALATE, a BradlyAI incident is created for L2 review.
 
     Configure Wazuh ossec.conf:
     ```xml
@@ -138,12 +142,13 @@ async def wazuh_webhook_ingest(payload: WazuhWebhookPayload):
         raise HTTPException(400, "No alerts in payload")
 
     results = []
+    l1_decisions = {"CLOSE": 0, "ESCALATE": 0, "SHADOW_CLOSE": 0}
     new_incidents = []
 
     for alert in payload.alerts:
         alert_dict = _wazuh_alert_to_dict(alert)
 
-        # Run through BradlyAI detection
+        # Build event for detection engine
         event = {
             "message": alert.rule.description,
             "source": alert.agent.name,
@@ -158,12 +163,46 @@ async def wazuh_webhook_ingest(payload: WazuhWebhookPayload):
         log_ingestion.ingest_text(alert.rule.description)
 
         result = {
+            "wazuh_alert_id": alert.id,
             "wazuh_rule_id": alert.rule.id,
             "wazuh_level": alert.rule.level,
             "wazuh_description": alert.rule.description,
             "agent": alert.agent.name,
+            "l1_decision": None,
         }
 
+        # === NEW: L1 Agent decision ===
+        if run_l1:
+            try:
+                # Normalize Wazuh alert into L1 Agent's expected format
+                normalized = normalize("wazuh", alert_dict)
+                decision = l1_engine.decide_sync(normalized, mode="active")
+                l1_decisions[decision.decision] = l1_decisions.get(decision.decision, 0) + 1
+                result["l1_decision"] = decision.decision
+                result["l1_confidence"] = decision.confidence
+                result["l1_reason"] = decision.reason[:200]
+                result["l1_signals"] = [s["name"] for s in decision.signals]
+
+                # Apply decision (this also calls Wazuh API if enabled + CLOSE)
+                if decision.decision in ("CLOSE", "ESCALATE"):
+                    applied = auto_closer.apply(decision)
+                    result["l1_action"] = applied.get("action_taken")
+                    result["l1_audit_id"] = applied.get("audit_id")
+                    if applied.get("wazuh_result"):
+                        result["l1_wazuh_result"] = applied["wazuh_result"]
+
+                # If agent decided CLOSE, don't create incident (it's already handled)
+                if decision.decision == "CLOSE":
+                    if bradly_alert:
+                        result["bradly_detected"] = True
+                        result["bradly_alert_id"] = bradly_alert.id
+                    continue  # Skip incident creation
+            except Exception as e:
+                logger.exception(f"L1 Agent error for {alert.id}: {e}")
+                result["l1_error"] = str(e)
+                # Fall through to incident creation
+
+        # === Original flow: create incident for HIGH/CRITICAL ===
         if bradly_alert:
             result["bradly_detected"] = True
             result["bradly_alert_id"] = bradly_alert.id
@@ -171,7 +210,6 @@ async def wazuh_webhook_ingest(payload: WazuhWebhookPayload):
             result["bradly_rule"] = bradly_alert.rule_id
             result["bradly_mitre"] = bradly_alert.mitre
 
-            # Auto-create incident for HIGH/CRITICAL
             if bradly_alert.severity in ("CRITICAL", "HIGH"):
                 inc = incident_manager.create_from_wazuh(alert_dict, {
                     "id": bradly_alert.id, "title": bradly_alert.title,
@@ -185,12 +223,16 @@ async def wazuh_webhook_ingest(payload: WazuhWebhookPayload):
 
         results.append(result)
 
-    logger.info(f"Wazuh ingest: {len(payload.alerts)} alerts, {len(new_incidents)} incidents created")
+    logger.info(
+        f"Wazuh ingest: {len(payload.alerts)} alerts | "
+        f"L1: close={l1_decisions['CLOSE']} escalate={l1_decisions['ESCALATE']} | "
+        f"incidents created={len(new_incidents)}"
+    )
 
     return {
         "status": "PROCESSED",
         "events_received": len(payload.alerts),
-        "threats_detected": sum(1 for r in results if r.get("bradly_detected")),
+        "l1_decisions": l1_decisions,
         "incidents_created": new_incidents,
         "results": results,
     }
@@ -420,6 +462,43 @@ async def wazuh_full_pipeline(input_data: WazuhAlertInput):
         "evidence_collected": len(inc.evidence_items),
         "closure_report": inc.closure_report if inc.status == IncidentStatus.CLOSED else None,
     }
+
+
+# ── TEST WEBHOOK: Simulate Wazuh calling us ──────────────────────────
+
+class WazuhTestWebhookInput(BaseModel):
+    """Synthetic Wazuh alert payload for testing the integration end-to-end."""
+    rule_level: int = Field(12, ge=0, le=15)
+    rule_id: str = "100001"
+    rule_description: str = "Suspicious PowerShell execution detected"
+    agent_name: str = "WEB-SRV01"
+    agent_ip: str = "192.168.1.100"
+    mitre_id: str = "T1059.001"
+    source_ip: Optional[str] = "10.0.0.50"
+
+
+@router.post("/wazuh/test-webhook")
+async def wazuh_test_webhook(input_data: WazuhTestWebhookInput):
+    """Simulate a Wazuh webhook call. Runs through the FULL pipeline.
+
+    This is what would happen if Wazuh sent a real alert to BradlyAI:
+      1. Wazuh webhook received
+      2. L1 Agent decision (CLOSE / ESCALATE)
+      3. If CLOSE + Wazuh API enabled → archive alert in Wazuh
+      4. If ESCALATE → create incident in BradlyAI
+
+    Use this to test your Wazuh integration BEFORE pointing Wazuh at it.
+    """
+    payload = WazuhWebhookPayload(alerts=[
+        WazuhAlert(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            rule=WazuhRule(level=input_data.rule_level, description=input_data.rule_description, id=input_data.rule_id, firedtimes=1),
+            agent=WazuhAgent(name=input_data.agent_name, ip=input_data.agent_ip),
+            data={"srcip": input_data.source_ip or input_data.agent_ip, "action": "blocked"},
+            id=input_data.rule_id,
+        )
+    ])
+    return await wazuh_webhook_ingest(payload)
 
 
 # ── HEALTH ─────────────────────────────────────────────────────────────
