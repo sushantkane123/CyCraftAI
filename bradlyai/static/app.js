@@ -506,7 +506,7 @@ class CyCraftApp {
                         <span>Monitored Assets</span>
                         <div class="stat-trend ${atRisk > 0 ? 'up' : 'down'}">${atRisk} at risk</div>
                     </div>
-                \`;
+                `;
             }
         } catch(e) {
             const statsContainer = document.getElementById('stats-grid');
@@ -516,7 +516,7 @@ class CyCraftApp {
                     <div class="stat-card"><div class="stat-value">99.4%</div><span>Autonomous Containment Rate</span><div class="stat-trend up">342/hr</div></div>
                     <div class="stat-card"><div class="stat-value">1.4s</div><span>Mean Time Response</span><div class="stat-trend down">-0.3s</div></div>
                     <div class="stat-card"><div class="stat-value">12,842</div><span>Monitored Assets</span><div class="stat-trend up">0 shadow IT</div></div>
-                \`;
+                `;
             }
         }
     }
