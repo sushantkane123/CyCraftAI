@@ -17,6 +17,7 @@ from bradlyai.services.l1_decision_engine import l1_engine
 from bradlyai.services.auto_closer import auto_closer
 from bradlyai.services.feedback_loop import feedback_loop
 from bradlyai.services.whitelist import whitelist_service
+from bradlyai.services.wazuh_api import wazuh_api
 
 logger = logging.getLogger("bradlyai.l1_router")
 router = APIRouter(prefix="/l1", tags=["L1 Agent"])
@@ -301,6 +302,41 @@ async def list_feedback(limit: int = Query(50, ge=1, le=500)):
         }
     finally:
         db.close()
+
+
+# ── Wazuh integration ──────────────────────────────────────────────────
+
+
+@router.get("/wazuh/health")
+async def wazuh_health():
+    """Check Wazuh Manager API connection and safety status.
+
+    Returns safety config (enabled, dry_run, close_mode) and a live test
+    of the connection if WAZUH_ENABLED=true.
+    """
+    status = wazuh_api.safety_status()
+    if wazuh_api.is_available() and not wazuh_api.dry_run:
+        # Try a real connection
+        live = wazuh_api.health_check()
+        status["live_test"] = live
+    return status
+
+
+@router.post("/wazuh/test-close")
+async def wazuh_test_close(alert_id: str = Body(..., embed=True),
+                            reason: str = Body("Test close from BradlyAI L1 dashboard", embed=True)):
+    """Test closing a Wazuh alert. Always runs in dry-run mode regardless of config.
+
+    Use this to verify the integration without affecting production.
+    """
+    # Force dry-run for this endpoint
+    original_dry_run = wazuh_api.dry_run
+    wazuh_api.dry_run = True
+    try:
+        result = wazuh_api.close_alert(alert_id=alert_id, reason=reason)
+        return {"test_mode": True, "result": result}
+    finally:
+        wazuh_api.dry_run = original_dry_run
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────

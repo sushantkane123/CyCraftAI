@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS: int = 300
     RATE_LIMIT_WINDOW_SECONDS: int = 60
 
+    # ── Wazuh Manager API Integration ───────────────────────────────────
+    # SAFETY: All disabled by default. Must explicitly enable for production.
+    WAZUH_ENABLED: bool = False
+    WAZUH_DRY_RUN: bool = True                            # True = log only, no actions
+    WAZUH_CLOSE_MODE: str = "comment_only"               # comment_only | archive_only | archive_and_comment
+    WAZUH_MANAGER_URL: str = ""                          # https://wazuh.example.com:55000
+    WAZUH_USER: str = ""
+    WAZUH_PASSWORD: str = ""
+    WAZUH_VERIFY_SSL: bool = True
+
     # ── Security ───────────────────────────────────────────────────────
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
 
