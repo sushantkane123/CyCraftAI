@@ -18,6 +18,7 @@ from bradlyai.services.auto_closer import auto_closer
 from bradlyai.services.feedback_loop import feedback_loop
 from bradlyai.services.whitelist import whitelist_service
 from bradlyai.services.wazuh_api import wazuh_api
+from bradlyai.services.greynoise_client import greynoise_client
 
 logger = logging.getLogger("bradlyai.l1_router")
 router = APIRouter(prefix="/l1", tags=["L1 Agent"])
@@ -337,6 +338,106 @@ async def wazuh_test_close(alert_id: str = Body(..., embed=True),
         return {"test_mode": True, "result": result}
     finally:
         wazuh_api.dry_run = original_dry_run
+
+
+# ── GreyNoise integration (free public threat intel) ──────────────────
+
+
+@router.get("/greynoise/check/{ip}")
+async def greynoise_check(ip: str):
+    """Query GreyNoise for a single IP. Returns raw + classification.
+
+    GreyNoise is a free public service that tracks internet-wide scanners.
+    Perfect for testing L1 Agent against real scanner data.
+    """
+    response = greynoise_client.query(ip)
+    classification = greynoise_client.classify(ip)
+    return {
+        "ip": ip,
+        "classification": classification,
+        "raw_response": response,
+    }
+
+
+@router.post("/greynoise/test-batch")
+async def greynoise_test_batch(ips: List[str]):
+    """Run a batch of IPs through L1 Agent decision engine.
+
+    Each IP is queried against GreyNoise, classified, then sent through
+    the full 5-signal decision engine as a synthetic Wazuh-style alert.
+    """
+    results = []
+    closed = 0
+    escalated = 0
+    for ip in ips:
+        try:
+            # Build a synthetic alert for this IP
+            alert_payload = {
+                "source": "wazuh",
+                "payload": {
+                    "rule": {"level": 5, "description": f"Connection from {ip}", "id": "9999"},
+                    "agent": {"name": "DEV-WIN-SRV09", "ip": "10.0.0.50"},
+                    "data": {"srcip": ip},
+                },
+            }
+            # Get GreyNoise verdict
+            gn_class = greynoise_client.classify(ip)
+            gn_verdict = "FP" if gn_class["confidence"] >= 0.7 and gn_class["verdict"] == "FP" else "REAL"
+            results.append({
+                "ip": ip,
+                "greynoise": gn_class,
+                "l1_decision": None,  # populated below
+            })
+            # Now run through full L1 Agent
+            normalized = normalize("wazuh", alert_payload["payload"])
+            decision = l1_engine.decide_sync(normalized, mode="active")
+            # If GreyNoise says FP, override (we trust threat intel)
+            if gn_verdict == "FP" and decision.decision != "CLOSE":
+                decision.decision = "CLOSE"
+                decision.confidence = max(decision.confidence, gn_class["confidence"])
+                decision.reason = f"GreyNoise: {gn_class['reason']}"
+                decision.primary_signal = "greynoise"
+                decision.signals.append({
+                    "name": "greynoise",
+                    "verdict": gn_class["verdict"],
+                    "confidence": gn_class["confidence"],
+                    "weight": 0.40,
+                    "reason": gn_class["reason"],
+                    "evidence": gn_class.get("raw", {}),
+                })
+            results[-1]["l1_decision"] = decision.to_dict()
+            if decision.decision == "CLOSE":
+                closed += 1
+            else:
+                escalated += 1
+        except Exception as e:
+            results.append({"ip": ip, "error": str(e)})
+    return {
+        "total": len(ips),
+        "closed": closed,
+        "escalated": escalated,
+        "results": results,
+    }
+
+
+@router.get("/greynoise/sample-ips")
+async def greynoise_sample_ips():
+    """Return a curated list of IPs known to be scanners for testing.
+
+    Includes both known-benign scanners (Shodan/Censys) and known-malicious.
+    """
+    return {
+        "benign_scanners_should_close": [
+            "71.6.194.186",       # Shodan (recent)
+            "162.142.125.55",     # Shodan scanner
+            "94.102.49.65",       # Masscan
+        ],
+        "malicious_should_escalate": [
+            "185.220.101.5",      # Known Tor exit (history)
+            "45.95.169.12",       # Known malicious
+        ],
+        "note": "Run: curl -X POST /api/v1/l1/greynoise/test-batch -d '{\"ips\":[...]}' to test",
+    }
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
