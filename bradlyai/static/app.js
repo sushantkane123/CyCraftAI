@@ -1777,4 +1777,4 @@ class CyCraftApp {
     }
 }
 
-const app = new CyCraftApp();
+const app = new BradlyAIApp();
