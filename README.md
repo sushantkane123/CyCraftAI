@@ -15,8 +15,8 @@
 
 ```
                     ┌──────────────────────────────────────────┐
-   Alert Source  →   │  Wazuh / Splunk / Jira / GreyNoise      │
-  (webhook/POST)    │  ↓                                      │
+   Alert Source  →   │  Wazuh / Splunk / Jira /  Splunk        │
+  (webhook/POST)    │                   ↓                                      │
                     │  1. Normalize to common shape            │
                     │  2. Run 5-signal decision engine:        │
                     │     • rule-based FP detector (regex)     │
@@ -26,15 +26,15 @@
                     │     • historical precedent              │
                     │  3. Combine signals → confidence score   │
                     └──────────────────────────────────────────┘
-                              ↓
-              ┌───────────────┴───────────────┐
-              ↓                               ↓
-    Confidence ≥ 0.85               Confidence < 0.85
-    → CLOSE                          → ESCALATE
-    → Log audit                      → Create incident
-    → Optional: archive in Wazuh    → Run investigation
-    → Skip incident creation         → Collect evidence
-                                      → Notify L2 analyst
+                                          ↓
+                          ┌───────────────┴───────────────┐
+                          ↓                               ↓
+                Confidence ≥ 0.85               Confidence < 0.85
+                → CLOSE                          → ESCALATE
+                → Log audit                      → Create incident
+                → Optional: archive in Wazuh    → Run investigation
+                → Skip incident creation         → Collect evidence
+                                                  → Notify L2 analyst
 ```
 
 **Result:** 60-85% of incoming alerts auto-closed. L2 only sees real threats. MTTR drops from hours to seconds.
