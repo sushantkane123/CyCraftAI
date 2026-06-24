@@ -41,6 +41,8 @@ class AuditLogModel(Base):
     agent_version = Column(String(16))                               # for tracking config changes
 
     # Human override (set later if human disagrees)
+    tenant_id = Column(String, index=True, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     overridden_at = Column(DateTime, nullable=True)
     overridden_by = Column(String(64), nullable=True)
     override_reason = Column(Text, nullable=True)
