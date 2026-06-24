@@ -32,10 +32,12 @@ class PlaybookRunModel(Base):
     alert_id = Column(String, nullable=True, index=True)
     status = Column(String, default="RUNNING", index=True)  # RUNNING / AWAITING_APPROVAL / COMPLETED / FAILED / CANCELLED
     current_step = Column(String, nullable=True)
+    pending_approval_step = Column(String, nullable=True)
     state_json = Column(JSON, nullable=True)              # variable bindings
     history_json = Column(JSON, nullable=True)            # step results history
     triggered_by = Column(String, nullable=True)
-    started_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    started_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), index=True)
     finished_at = Column(DateTime, nullable=True)
     error = Column(Text, nullable=True)
     tenant_id = Column(String, index=True, nullable=True)

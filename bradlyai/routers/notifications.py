@@ -36,7 +36,7 @@ class EscalateRequest(BaseModel):
 def send(req: NotifyRequest, db: Session = Depends(get_db),
          user: UserModel = Depends(require_permission("notifications", "write"))):
     result = notify(req.channel, message=req.message, subject=req.subject, to=req.to,
-                    channel=req.channel_name, severity=req.severity, summary=req.summary,
+                    target_channel=req.channel_name, severity=req.severity, summary=req.summary,
                     url=req.url, payload=req.payload)
     db.add(NotificationLogModel(
         channel=req.channel, target=req.to or req.channel_name, subject=req.subject,

@@ -367,8 +367,15 @@ def run_playbook(db: Session, playbook_id: str, alert: Optional[Dict[str, Any]] 
 
             steps_executed += 1
             run.current_step = cur_id
-            run.state_json = ctx
-            run.history_json = history
+            _safe_ctx = {k: v for k, v in ctx.items() if k != "db"}
+            import datetime as _dt
+            def _jsonable(o):
+                if isinstance(o, _dt.datetime): return o.isoformat()
+                if isinstance(o, _dt.date): return o.isoformat()
+                return str(o)
+            import json as _json
+            run.state_json = _json.loads(_json.dumps(_safe_ctx, default=_jsonable))
+            run.history_json = _json.loads(_json.dumps(history, default=_jsonable))
             db.commit()
 
             # Approval gate
@@ -443,7 +450,13 @@ def resume_playbook(db: Session, run_id: str, approved: bool,
             result = {"error": str(exc)}
         history.append({"step": cur_id, "action": step["action"], "result": result})
         run.history_json = history
-        run.state_json = ctx
+        import json as _json2; import datetime as _dt2
+        def _jsonable2(o):
+            if isinstance(o, _dt2.datetime): return o.isoformat()
+            if isinstance(o, _dt2.date): return o.isoformat()
+            return str(o)
+        _safe_ctx = {k: v for k, v in ctx.items() if k != "db"}
+        run.state_json = _json2.loads(_json2.dumps(_safe_ctx, default=_jsonable2))
         db.commit()
         if step.get("requires_approval"):
             run.status = "AWAITING_APPROVAL"

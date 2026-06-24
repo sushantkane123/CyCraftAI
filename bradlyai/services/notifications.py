@@ -30,7 +30,7 @@ class NotificationResult:
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
-def notify(channel: str, **kwargs) -> Dict[str, Any]:
+def notify(channel_kind: str, **kwargs) -> Dict[str, Any]:
     """Top-level dispatcher. channel ∈ {slack, teams, pagerduty, email, webhook}.
 
     Returns a dict with {channel, success, detail, extra}.
@@ -41,20 +41,20 @@ def notify(channel: str, **kwargs) -> Dict[str, Any]:
         "pagerduty": _send_pagerduty,
         "email": _send_email,
         "webhook": _send_webhook,
-    }.get(channel.lower())
+    }.get(channel_kind.lower())
     if handler is None:
-        return NotificationResult(channel=channel, success=False,
-                                  detail=f"Unknown channel: {channel}").__dict__
+        return NotificationResult(channel=channel_kind, success=False,
+                                  detail=f"Unknown channel: {channel_kind}").__dict__
     try:
         return handler(**kwargs).__dict__
     except Exception as exc:
-        logger.exception(f"Notification {channel} failed")
-        return NotificationResult(channel=channel, success=False, detail=str(exc)).__dict__
+        logger.exception(f"Notification {channel_kind} failed")
+        return NotificationResult(channel=channel_kind, success=False, detail=str(exc)).__dict__
 
 
 # ── Slack ──────────────────────────────────────────────────────────────
 def _send_slack(message: str, channel: Optional[str] = None,
-                blocks: Optional[list] = None) -> NotificationResult:
+                blocks: Optional[list] = None, **kwargs) -> NotificationResult:
     if not settings.SLACK_ENABLED:
         return NotificationResult("slack", True, detail="dry-run (SLACK_ENABLED=false)",
                                   extra={"would_post": {"channel": channel or settings.SLACK_DEFAULT_CHANNEL,
@@ -75,7 +75,7 @@ def _send_slack(message: str, channel: Optional[str] = None,
 
 # ── Microsoft Teams (Incoming Webhook) ────────────────────────────────
 def _send_teams(message: str, title: Optional[str] = None,
-                color: str = "FF0000") -> NotificationResult:
+                color: str = "FF0000", **kwargs) -> NotificationResult:
     if not settings.TEAMS_ENABLED or not settings.TEAMS_WEBHOOK_URL:
         return NotificationResult("teams", True, detail="dry-run (TEAMS_ENABLED=false)",
                                   extra={"would_post": {"title": title, "text": message}})
@@ -98,7 +98,7 @@ def _send_teams(message: str, title: Optional[str] = None,
 # ── PagerDuty Events API v2 ───────────────────────────────────────────
 def _send_pagerduty(summary: str, severity: str = "warning",
                     source: str = "bradlyai", service_key: Optional[str] = None,
-                    custom_details: Optional[Dict[str, Any]] = None) -> NotificationResult:
+                    custom_details: Optional[Dict[str, Any]] = None, **kwargs) -> NotificationResult:
     if not settings.PAGERDUTY_ENABLED:
         return NotificationResult("pagerduty", True, detail="dry-run (PAGERDUTY_ENABLED=false)",
                                   extra={"would_post": {"summary": summary, "severity": severity}})
@@ -119,8 +119,10 @@ def _send_pagerduty(summary: str, severity: str = "warning",
 
 
 # ── Email (SMTP) ──────────────────────────────────────────────────────
-def _send_email(to: str, subject: str, body: str,
-                html_body: Optional[str] = None) -> NotificationResult:
+def _send_email(to: str, subject: str, body: Optional[str] = None, message: Optional[str] = None,
+                html_body: Optional[str] = None, **kwargs) -> NotificationResult:
+    if body is None:
+        body = message or ""
     if not settings.EMAIL_ENABLED:
         return NotificationResult("email", True, detail="dry-run (EMAIL_ENABLED=false)",
                                   extra={"would_send": {"to": to, "subject": subject}})
@@ -146,7 +148,7 @@ def _send_email(to: str, subject: str, body: str,
 
 
 # ── Generic webhook ───────────────────────────────────────────────────
-def _send_webhook(url: Optional[str] = None, payload: Optional[Dict[str, Any]] = None) -> NotificationResult:
+def _send_webhook(url: Optional[str] = None, payload: Optional[Dict[str, Any]] = None, **kwargs) -> NotificationResult:
     target = url or settings.WEBHOOK_NOTIFY_URL
     if not settings.WEBHOOK_NOTIFY_ENABLED or not target:
         return NotificationResult("webhook", True, detail="dry-run (WEBHOOK_NOTIFY_ENABLED=false)",
@@ -185,7 +187,7 @@ def escalate_to_l2(alert: Dict[str, Any], reason: str,
     results = {}
     for ch in enabled_channels:
         if ch == "slack":
-            results[ch] = notify("slack", message=summary, channel=settings.SLACK_L2_CHANNEL)
+            results[ch] = notify("slack", message=summary, target_channel=settings.SLACK_L2_CHANNEL)
         elif ch == "teams":
             results[ch] = notify("teams", message=summary, title="BradlyAI L2 Escalation", color="FF0000")
         elif ch == "pagerduty":

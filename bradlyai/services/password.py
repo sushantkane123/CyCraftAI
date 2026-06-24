@@ -1,17 +1,20 @@
-"""Password hashing — bcrypt with secure defaults."""
-from passlib.context import CryptContext
-
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+"""Password hashing - bcrypt direct (avoids passlib/bcrypt version conflicts)."""
+import bcrypt
 
 
 def hash_password(plain: str) -> str:
-    """Hash a plaintext password using bcrypt."""
-    return _pwd_context.hash(plain)
+    """Hash a plaintext password using bcrypt (cost factor 12)."""
+    plain_bytes = plain.encode("utf-8")[:72]   # bcrypt limit
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(plain_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Verify a plaintext password against a stored hash."""
+    """Verify a plaintext password against a stored bcrypt hash."""
+    if not hashed:
+        return False
     try:
-        return _pwd_context.verify(plain, hashed)
+        plain_bytes = plain.encode("utf-8")[:72]
+        return bcrypt.checkpw(plain_bytes, hashed.encode("utf-8"))
     except Exception:
         return False

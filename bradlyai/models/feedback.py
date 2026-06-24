@@ -34,4 +34,5 @@ class FeedbackModel(Base):
 
     # Learning signal
     learned = Column(Boolean, default=False, index=True)              # has feedback_loop processed this?
+    action = Column(String(64), index=True, nullable=True)
     learning_action = Column(String(64))                             # what was done (e.g., "added to whitelist")

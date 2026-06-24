@@ -39,8 +39,15 @@ if os.path.exists("./test_bradlyai.db"):
     os.remove("./test_bradlyai.db")
 
 from bradlyai.main import app   # noqa: E402
+from bradlyai.services.bootstrap import run_all as _run_bootstrap
+
+def _ensure_bootstrap():
+    from bradlyai.database import SessionLocal
+    _run_bootstrap(SessionLocal())
+_ensure_bootstrap()
 
 client = TestClient(app)
+_bootstrap_done = False
 
 
 # ── Auth ──────────────────────────────────────────────────────────────
